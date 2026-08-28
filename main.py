@@ -1,4 +1,7 @@
 import pyaudio
+import pyautogui
+import sounddevice as sd
+import soundfile as sf
 import threading
 import numpy as np
 from faster_whisper import WhisperModel
@@ -12,8 +15,9 @@ CHANNELS = 1
 RATE = 16000
 
 p = pyaudio.PyAudio()
-model = WhisperModel("small.en", device="cpu", compute_type="int8")
-
+model = WhisperModel("base.en", device="auto", compute_type="int8")
+start_sound, start_rate = sf.read("sound_effects/start.wav")
+stop_sound, stop_rate = sf.read("sound_effects/stop.wav")
 is_active = False
 key_held = False
 
@@ -22,6 +26,12 @@ config_options = {
     'num_ctx': 4096,
     'top_p': 0.9
 }
+
+def play_sound(start):
+    if start:
+        wave = sd.play(start_sound, start_rate)
+    else:
+        wave = sd.play(stop_sound, stop_rate)
 
 def clean_text(text: str) -> str:
     cleaned_text = chat(
@@ -65,6 +75,7 @@ def clean_text(text: str) -> str:
             """
         }]
         )
+    print(cleaned_text.message.content + " hello ")
     return cleaned_text.message.content
 
 def record_audio():
@@ -104,13 +115,17 @@ def record_audio():
     print(f"elapsed (cleanup): {end_time_cleanup-start_time_cleanup}")
     print(f"elapsed (total): {end_time_cleanup-start_time_transcription}")
     print(text)
+    output_text = text.replace("Output:", "")
+    pyautogui.write(output_text)
+
 
 def on_press(key):
     global is_active
     global key_held
     try:
-        if key == keyboard.Key.cmd:
+        if key == keyboard.Key.alt_l:
             if not key_held:
+                play_sound(True)
                 is_active = True
                 key_held = True
                 action_thread = threading.Thread(target=record_audio, daemon=True)
@@ -126,12 +141,13 @@ def on_release(key):
     global is_active
     global key_held
     try:
-        if key == keyboard.Key.cmd:
+        if key == keyboard.Key.alt_l:
+            play_sound(False)
             key_held = False
             is_active = False
     except AttributeError:
         return
 
 with keyboard.Listener(on_press=on_press, on_release=on_release) as listener:
-    print("Waiting for cmd press")
+    print("Waiting for left alt/option key press")
     listener.join()
