@@ -75,7 +75,6 @@ def clean_text(text: str) -> str:
             """
         }]
         )
-    print(cleaned_text.message.content + " hello ")
     return cleaned_text.message.content
 
 def record_audio():
