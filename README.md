@@ -21,7 +21,7 @@ After setting up Ollama, you can now get started on setting up the rest of the a
 Start by setting up the python virtual environment:
 
 ```bash
-python -m venv venv
+python -m venv .venv
 source .venv/bin/activate
 ```
 
